@@ -20,7 +20,7 @@ module.exports = [
       filename: 'server.js',
     },
     name: 'server',
-    entry: './test/src/server.ts',
+    entry: './test/server.ts',
     mode: 'development',
   },
   {
@@ -43,7 +43,7 @@ module.exports = [
       filename: 'client.js',
     },
     name: 'client',
-    entry: './test/src/client.ts',
+    entry: './test/client.ts',
     mode: 'development',
   },
 ];

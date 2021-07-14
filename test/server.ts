@@ -1,4 +1,4 @@
-import WindowBus from "../../index";
+import WindowBus from "../index";
 
 const bus = new WindowBus();
 const pre = document.getElementsByTagName('pre')[0];

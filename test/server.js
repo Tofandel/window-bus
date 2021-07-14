@@ -91,13 +91,12 @@ var tiny_emitter_1 = __webpack_require__(/*! tiny-emitter */ "./node_modules/tin
 var WindowBus = (function () {
     function WindowBus(targetWindow, origin) {
         var _this = this;
-        this.emitter = null;
+        this.emitter = new tiny_emitter_1.TinyEmitter();
         this.frame = null;
         this.origin = null;
         this.id = 1;
         this.queue = {};
         this.chains = {};
-        this.emitter = new tiny_emitter_1.TinyEmitter();
         this.frame = targetWindow || window.parent;
         if (!this.frame) {
             throw new Error('A frame is required');
@@ -175,7 +174,7 @@ var WindowBus = (function () {
     };
     WindowBus.prototype.off = function (action, cb) {
         if (cb) {
-            var res = this.chains[action].find(function (v) { return v.cb === cb; });
+            var res = (this.chains[action] || []).find(function (v) { return v.cb === cb; });
             if (res) {
                 cb = res.c;
             }
@@ -189,10 +188,10 @@ exports.default = WindowBus;
 
 /***/ }),
 
-/***/ "./test/src/server.ts":
-/*!****************************!*\
-  !*** ./test/src/server.ts ***!
-  \****************************/
+/***/ "./test/server.ts":
+/*!************************!*\
+  !*** ./test/server.ts ***!
+  \************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -209,7 +208,7 @@ var __assign = (this && this.__assign) || function () {
     return __assign.apply(this, arguments);
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-var index_1 = __webpack_require__(/*! ../../index */ "./index.ts");
+var index_1 = __webpack_require__(/*! ../index */ "./index.ts");
 var bus = new index_1.default();
 var pre = document.getElementsByTagName('pre')[0];
 var display = function (res) {
@@ -263,7 +262,7 @@ bus.once('otherTest', function (res) {
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __webpack_require__("./test/src/server.ts");
+/******/ 	var __webpack_exports__ = __webpack_require__("./test/server.ts");
 /******/ 	
 /******/ })()
 ;

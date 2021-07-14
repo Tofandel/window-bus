@@ -1,4 +1,4 @@
-import WindowBus from "../../index";
+import WindowBus from "../index";
 
 (window as any).startClient = (iframe) => {
   const bus = new WindowBus(iframe.contentWindow);
