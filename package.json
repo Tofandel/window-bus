@@ -1,17 +1,18 @@
 {
   "name": "window-bus",
-  "version": "1.0.2",
-  "description": "An ultra light library to communicate between iframes regardless of origin",
+  "version": "1.0.4",
+  "description": "An ultra light library to facilitate communication between iframes regardless of origin",
   "main": "index.js",
   "files": [
     "index.d.ts",
-    "index.ts"
+    "index.ts",
+    "index.js"
   ],
   "scripts": {
     "test": "webpack && npx http-server test -o & webpack --watch",
     "build": "tsc --build",
     "clean": "tsc --build --clean",
-    "prepare": "npm run clean"
+    "prepare": "npm run clean && npm run build"
   },
   "keywords": [
     "window",

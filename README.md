@@ -5,7 +5,7 @@ npm install window-bus --save
 ```
 ## Description
 
-An ultra light (2Kb) library to communicate between iframes, regardless of origin
+An ultra light (2Kb) library to facilitate communication between iframes, regardless of origin
 
 ## Example
 
@@ -21,7 +21,7 @@ const iframe = document.createElement('iframe');
 iframe.src = 'some_url';
 
 iframe.onload = () => {
-  const bus = new WindowBus(iframe);
+  const bus = new WindowBus(iframe.contentWindow);
 
   const pre = document.body;
   const display = (res) => {
