@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "noImplicitAny": false,
+    "noEmitOnError": true,
+    "removeComments": true,
+    "sourceMap": false,
+    "declaration": true,
+    "target": "es5",
+    "module": "commonjs",
+    "outDir": ""
+  },
+  "include": [
+    "index.ts"
+  ]
+}

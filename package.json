@@ -1,0 +1,34 @@
+{
+  "name": "window-bus",
+  "version": "1.0.0",
+  "description": "An ultra light library to communicate between iframes regardless of origin",
+  "main": "index.js",
+  "files": [
+    "index.d.ts",
+    "index.ts"
+  ],
+  "scripts": {
+    "test": "webpack && npx http-server test -o & webpack --watch",
+    "build": "tsc --build",
+    "clean": "tsc --build --clean",
+    "prepare": "npm run clean"
+  },
+  "keywords": [
+    "window",
+    "iframe",
+    "cors",
+    "message"
+  ],
+  "repository": "https://github.com/Tofandel/window-bus.git",
+  "author": "Adrien Foulon",
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "tiny-emitter": "^2.1.0"
+  },
+  "devDependencies": {
+    "http-server": "^0.12.3",
+    "ts-loader": "^9.2.3",
+    "typescript": "^4.3.5",
+    "webpack-cli": "^4.7.2"
+  }
+}
