@@ -72,3 +72,12 @@ bus.once('otherTest', (res) => {
   return res + ' for the first time';
 });
 ```
+
+## A note on Security
+
+This library assumes the server is a public page and thus any client can connect to it if a CSP is not configured
+
+Here is the header you can serve from the server to only allow `https://some-client.com` to connect to the server
+```
+Content-Security-Policy: frame-ancestors 'self' https://some-client.com;
+```

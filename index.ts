@@ -1,7 +1,7 @@
 import {TinyEmitter} from 'tiny-emitter';
 
 export default class WindowBus {
-    private emitter = null;
+    private readonly emitter = new TinyEmitter();
 
     private readonly frame: Window = null;
     private readonly origin: string = null;
@@ -10,7 +10,6 @@ export default class WindowBus {
     private queue = {};
 
     constructor(targetWindow?: Window, origin?: string) {
-        this.emitter = new TinyEmitter();
         this.frame = targetWindow || window.parent;
 
         if (!this.frame) {
@@ -93,7 +92,7 @@ export default class WindowBus {
 
     off(action: string, cb?: CallableFunction) {
         if (cb) {
-            const res = this.chains[action].find((v) => v.cb === cb);
+            const res = (this.chains[action] || []).find((v) => v.cb === cb);
             if (res) {
                 cb = res.c;
             }
