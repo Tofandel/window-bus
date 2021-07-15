@@ -98,7 +98,7 @@ var WindowBus = (function () {
         this.queue = {};
         this.channel = 'window-bus';
         this.chains = {};
-        this.frame = targetWindow || window.parent;
+        this.frame = targetWindow || (window.parent !== window && window.parent);
         if (!this.frame) {
             throw new Error('A frame is required');
         }
@@ -111,12 +111,12 @@ var WindowBus = (function () {
                 return;
             try {
                 var data_1 = typeof event.data === "object" ? event.data : JSON.parse(event.data);
-                if (data_1.target === _this.channel) {
-                    if (data_1.reply === true && data_1.id && _this.queue[data_1.id]) {
+                if (data_1.target === _this.channel && data_1.id) {
+                    if (data_1.reply === true && _this.queue[data_1.id]) {
                         _this.queue[data_1.id][data_1.error ? 'reject' : 'resolve'](data_1.payload);
                         delete _this.queue[data_1.id];
                     }
-                    else {
+                    else if (data_1.reply !== true) {
                         var chain_1 = Promise.resolve(data_1.payload);
                         _this.emitter.emit(data_1.action, function (cb) {
                             chain_1 = chain_1.then(function (v) { return cb(v, data_1.payload); });
@@ -253,6 +253,23 @@ window.startClient = function (iframe) {
         display(res);
         return bus.dispatch('otherTest', 'hi again');
     }).then(display);
+};
+window.openPopup = function () {
+    var win = window.open('server.html', 'example', 'width=300,height=300');
+    win.onload = function () {
+        var bus = new index_1.default(win);
+        bus.setChannel('demo');
+        var text = document.createElement('textarea');
+        document.body.append(text);
+        text.addEventListener('input', function () {
+            bus.dispatch('change', text.value);
+        });
+        bus.on('change', function (value) {
+            if (text.value !== value) {
+                text.value = value;
+            }
+        });
+    };
 };
 
 })();

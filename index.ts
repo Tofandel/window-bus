@@ -11,7 +11,7 @@ export default class WindowBus {
     private channel = 'window-bus';
 
     constructor(targetWindow?: Window, origin?: string, channel?: string) {
-        this.frame = targetWindow || window.parent;
+        this.frame = targetWindow || (window.parent !== window && window.parent);
 
         if (!this.frame) {
             throw new Error('A frame is required')
@@ -29,11 +29,11 @@ export default class WindowBus {
             try {
                 const data = typeof event.data === "object" ? event.data : JSON.parse(event.data);
 
-                if (data.target === this.channel) {
-                    if (data.reply === true && data.id && this.queue[data.id]) {
+                if (data.target === this.channel && data.id) {
+                    if (data.reply === true && this.queue[data.id]) {
                         this.queue[data.id][data.error ? 'reject' : 'resolve'](data.payload);
                         delete this.queue[data.id];
-                    } else {
+                    } else if (data.reply !== true) {
                         let chain = Promise.resolve(data.payload);
                         this.emitter.emit(data.action, (cb) => {
                             chain = chain.then((v) => cb(v, data.payload))

@@ -1,6 +1,6 @@
 {
   "name": "window-bus",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "An ultra light library to facilitate communication between iframes regardless of origin",
   "main": "index.js",
   "files": [

@@ -98,7 +98,7 @@ var WindowBus = (function () {
         this.queue = {};
         this.channel = 'window-bus';
         this.chains = {};
-        this.frame = targetWindow || window.parent;
+        this.frame = targetWindow || (window.parent !== window && window.parent);
         if (!this.frame) {
             throw new Error('A frame is required');
         }
@@ -111,12 +111,12 @@ var WindowBus = (function () {
                 return;
             try {
                 var data_1 = typeof event.data === "object" ? event.data : JSON.parse(event.data);
-                if (data_1.target === _this.channel) {
-                    if (data_1.reply === true && data_1.id && _this.queue[data_1.id]) {
+                if (data_1.target === _this.channel && data_1.id) {
+                    if (data_1.reply === true && _this.queue[data_1.id]) {
                         _this.queue[data_1.id][data_1.error ? 'reject' : 'resolve'](data_1.payload);
                         delete _this.queue[data_1.id];
                     }
-                    else {
+                    else if (data_1.reply !== true) {
                         var chain_1 = Promise.resolve(data_1.payload);
                         _this.emitter.emit(data_1.action, function (cb) {
                             chain_1 = chain_1.then(function (v) { return cb(v, data_1.payload); });
@@ -212,30 +212,45 @@ var __assign = (this && this.__assign) || function () {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 var index_1 = __webpack_require__(/*! ../index */ "./index.ts");
-var bus = new index_1.default();
-bus.setChannel('demo');
-var pre = document.getElementsByTagName('pre')[0];
-var display = function (res) {
-    pre.append(document.createTextNode(JSON.stringify(res)));
-    pre.append(document.createElement('br'));
-};
-var cb = function (res) { return new Promise(function (resolve) {
-    setTimeout(function () { return resolve(__assign(__assign({}, res), { result1: true })); }, 100);
-}); };
-bus.on('test', cb);
-bus.on('test', function (res, original) {
-    bus.off('test', cb);
-    display(original);
-    return __assign(__assign({}, res), { result2: true });
-});
-bus.once('otherTest', function (res) {
-    setTimeout(function () {
-        bus.dispatch('print', 'sent from the server').then(function (msg) {
-            display(msg);
-        });
-    }, 100);
-    return res + ' for the first time';
-});
+try {
+    var bus_1 = new index_1.default(window.opener);
+    bus_1.setChannel('demo');
+    var text_1 = document.getElementsByTagName('textarea')[0];
+    text_1.addEventListener('input', function () {
+        document.body.append(document.createTextNode(JSON.stringify(window.parent.location.href)));
+        bus_1.dispatch('change', text_1.value);
+    });
+    bus_1.on('change', function (value) {
+        if (text_1.value !== value) {
+            text_1.value = value;
+        }
+    });
+    var pre_1 = document.getElementsByTagName('pre')[0];
+    var display_1 = function (res) {
+        pre_1.append(document.createTextNode(JSON.stringify(res)));
+        pre_1.append(document.createElement('br'));
+    };
+    var cb_1 = function (res) { return new Promise(function (resolve) {
+        setTimeout(function () { return resolve(__assign(__assign({}, res), { result1: true })); }, 100);
+    }); };
+    bus_1.on('test', cb_1);
+    bus_1.on('test', function (res, original) {
+        bus_1.off('test', cb_1);
+        display_1(original);
+        return __assign(__assign({}, res), { result2: true });
+    });
+    bus_1.once('otherTest', function (res) {
+        setTimeout(function () {
+            bus_1.dispatch('print', 'sent from the server').then(function (msg) {
+                display_1(msg);
+            });
+        }, 100);
+        return res + ' for the first time';
+    });
+}
+catch (e) {
+    document.body.append(document.createTextNode(e.toString()));
+}
 
 
 /***/ })
