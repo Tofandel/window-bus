@@ -212,12 +212,11 @@ var __assign = (this && this.__assign) || function () {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 var index_1 = __webpack_require__(/*! ../index */ "./index.ts");
-try {
+if (window.opener) {
     var bus_1 = new index_1.default(window.opener);
-    bus_1.setChannel('demo');
+    bus_1.setChannel('demo-2');
     var text_1 = document.getElementsByTagName('textarea')[0];
     text_1.addEventListener('input', function () {
-        document.body.append(document.createTextNode(JSON.stringify(window.parent.location.href)));
         bus_1.dispatch('change', text_1.value);
     });
     bus_1.on('change', function (value) {
@@ -225,31 +224,46 @@ try {
             text_1.value = value;
         }
     });
-    var pre_1 = document.getElementsByTagName('pre')[0];
-    var display_1 = function (res) {
-        pre_1.append(document.createTextNode(JSON.stringify(res)));
-        pre_1.append(document.createElement('br'));
-    };
-    var cb_1 = function (res) { return new Promise(function (resolve) {
-        setTimeout(function () { return resolve(__assign(__assign({}, res), { result1: true })); }, 100);
-    }); };
-    bus_1.on('test', cb_1);
-    bus_1.on('test', function (res, original) {
-        bus_1.off('test', cb_1);
-        display_1(original);
-        return __assign(__assign({}, res), { result2: true });
-    });
-    bus_1.once('otherTest', function (res) {
-        setTimeout(function () {
-            bus_1.dispatch('print', 'sent from the server').then(function (msg) {
-                display_1(msg);
-            });
-        }, 100);
-        return res + ' for the first time';
-    });
 }
-catch (e) {
-    document.body.append(document.createTextNode(e.toString()));
+else {
+    try {
+        var bus_2 = new index_1.default();
+        bus_2.setChannel('demo');
+        var text_2 = document.getElementsByTagName('textarea')[0];
+        text_2.addEventListener('input', function () {
+            bus_2.dispatch('change', text_2.value);
+        });
+        bus_2.on('change', function (value) {
+            if (text_2.value !== value) {
+                text_2.value = value;
+            }
+        });
+        var pre_1 = document.getElementsByTagName('pre')[0];
+        var display_1 = function (res) {
+            pre_1.append(document.createTextNode(JSON.stringify(res)));
+            pre_1.append(document.createElement('br'));
+        };
+        var cb_1 = function (res) { return new Promise(function (resolve) {
+            setTimeout(function () { return resolve(__assign(__assign({}, res), { result1: true })); }, 100);
+        }); };
+        bus_2.on('test', cb_1);
+        bus_2.on('test', function (res, original) {
+            bus_2.off('test', cb_1);
+            display_1(original);
+            return __assign(__assign({}, res), { result2: true });
+        });
+        bus_2.once('otherTest', function (res) {
+            setTimeout(function () {
+                bus_2.dispatch('print', 'sent from the server').then(function (msg) {
+                    display_1(msg);
+                });
+            }, 100);
+            return res + ' for the first time';
+        });
+    }
+    catch (e) {
+        document.body.append(document.createTextNode(e.toString()));
+    }
 }
 
 

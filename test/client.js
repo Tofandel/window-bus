@@ -253,14 +253,23 @@ window.startClient = function (iframe) {
         display(res);
         return bus.dispatch('otherTest', 'hi again');
     }).then(display);
+    var text = document.getElementsByTagName('textarea')[0];
+    text.addEventListener('input', function () {
+        bus.dispatch('change', text.value);
+    });
+    bus.on('change', function (value) {
+        if (text.value !== value) {
+            text.value = value;
+        }
+    });
 };
 window.openPopup = function () {
     var win = window.open('server.html', 'example', 'width=300,height=300');
     win.onload = function () {
         var bus = new index_1.default(win);
-        bus.setChannel('demo');
-        var text = document.createElement('textarea');
-        document.body.append(text);
+        bus.setChannel('demo-2');
+        var text = document.getElementsByTagName('textarea')[0];
+        bus.dispatch('change', text.value);
         text.addEventListener('input', function () {
             bus.dispatch('change', text.value);
         });

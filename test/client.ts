@@ -28,16 +28,30 @@ import WindowBus from "../index";
     display(res);
     return bus.dispatch('otherTest', 'hi again')
   }).then(display);
+
+  const text = document.getElementsByTagName('textarea')[0];
+
+  text.addEventListener('input', () => {
+    bus.dispatch('change', text.value);
+  });
+
+  bus.on('change', (value) => {
+    if (text.value !== value) {
+      text.value = value;
+    }
+  });
 }
+
 
 (window as any).openPopup = () => {
   const win = window.open('server.html', 'example', 'width=300,height=300');
   win.onload = () => {
     const bus = new WindowBus(win);
-    bus.setChannel('demo'); // This is optional, needs to match server channel
+    bus.setChannel('demo-2'); // This is optional, needs to match server channel
 
-    const text = document.createElement('textarea');
-    document.body.append(text);
+    const text = document.getElementsByTagName('textarea')[0];
+
+    bus.dispatch('change', text.value);
     text.addEventListener('input', () => {
       bus.dispatch('change', text.value);
     });
