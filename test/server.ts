@@ -11,9 +11,7 @@ if (window.opener) {
     });
 
     bus.on('change', (value) => {
-        if (text.value !== value) {
-            text.value = value;
-        }
+        text.value = value;
     });
 } else {
     try {

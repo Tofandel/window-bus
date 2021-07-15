@@ -258,9 +258,7 @@ window.startClient = function (iframe) {
         bus.dispatch('change', text.value);
     });
     bus.on('change', function (value) {
-        if (text.value !== value) {
-            text.value = value;
-        }
+        text.value = value;
     });
 };
 window.openPopup = function () {

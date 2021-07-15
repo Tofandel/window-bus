@@ -36,9 +36,7 @@ import WindowBus from "../index";
   });
 
   bus.on('change', (value) => {
-    if (text.value !== value) {
-      text.value = value;
-    }
+    text.value = value;
   });
 }
 

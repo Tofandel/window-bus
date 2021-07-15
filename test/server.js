@@ -220,9 +220,7 @@ if (window.opener) {
         bus_1.dispatch('change', text_1.value);
     });
     bus_1.on('change', function (value) {
-        if (text_1.value !== value) {
-            text_1.value = value;
-        }
+        text_1.value = value;
     });
 }
 else {
