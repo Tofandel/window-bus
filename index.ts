@@ -10,7 +10,7 @@ export default class WindowBus {
     private queue = {};
     private channel = 'window-bus';
 
-    constructor(targetWindow?: Window, origin?: string, channel?: string) {
+    constructor(targetWindow?: Window, channel?: string, origin?: string) {
         this.frame = targetWindow || (window.parent !== window && window.parent);
 
         if (!this.frame) {

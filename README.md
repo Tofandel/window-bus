@@ -21,8 +21,7 @@ const iframe = document.createElement('iframe');
 iframe.src = 'some_url';
 
 iframe.onload = () => {
-  const bus = new WindowBus(iframe.contentWindow);
-  bus.setChannel('demo'); // This is optional, needs to match the server
+  const bus = new WindowBus(iframe.contentWindow, 'demo'); // demo here is the server channel
 
   const pre = document.body;
   const display = (res) => {
@@ -57,8 +56,8 @@ document.body.append(iframe);
 ```js
 import WindowBus from "window-bus";
 
-const bus = new WindowBus();
-bus.setChannel('demo'); // This is optional, needs to match on both sides
+const bus = new WindowBus(window.parent, 'demo'); // The channel is optional, but needs to match on both sides
+//const bus = new WindowBus(window.opener, 'demo'); // This will allow both popups and iframes to communicate
 
 const pre = document.body;
 const display = (res) => {
