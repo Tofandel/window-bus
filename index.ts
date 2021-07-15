@@ -8,12 +8,17 @@ export default class WindowBus {
 
     private id = 1;
     private queue = {};
+    private channel = 'window-bus';
 
-    constructor(targetWindow?: Window, origin?: string) {
+    constructor(targetWindow?: Window, origin?: string, channel?: string) {
         this.frame = targetWindow || window.parent;
 
         if (!this.frame) {
             throw new Error('A frame is required')
+        }
+
+        if (channel) {
+            this.setChannel(channel);
         }
 
         this.origin = origin || this.frame.location.origin;
@@ -24,7 +29,7 @@ export default class WindowBus {
             try {
                 const data = typeof event.data === "object" ? event.data : JSON.parse(event.data);
 
-                if (data.target === 'window-bus') {
+                if (data.target === this.channel) {
                     if (data.reply === true && data.id && this.queue[data.id]) {
                         this.queue[data.id][data.error ? 'reject' : 'resolve'](data.payload);
                         delete this.queue[data.id];
@@ -34,9 +39,9 @@ export default class WindowBus {
                             chain = chain.then((v) => cb(v, data.payload))
                         });
                         chain.then((payload?: any) => {
-                            WindowBus.reply(event, data.id, payload);
+                            this.reply(event, data.id, payload);
                         }, (payload?: any) => {
-                            WindowBus.reply(event, data.id, payload, true);
+                            this.reply(event, data.id, payload, true);
                         });
                     }
                 }
@@ -45,10 +50,14 @@ export default class WindowBus {
         });
     }
 
-    private static reply(event, id, payload?: any, error?: boolean) {
+    setChannel (channel: string) {
+        this.channel = channel;
+    }
+
+    private reply(event, id, payload?: any, error?: boolean) {
         event.source.postMessage({
             reply: true,
-            target: 'window-bus',
+            target: this.channel,
             id,
             payload,
             error,
@@ -59,7 +68,7 @@ export default class WindowBus {
         return new Promise((resolve, reject) => {
             const t = setTimeout(() => reject(new Error('timeout')), 30000);
             this.queue[this.id] = {
-                resolve: (...args) => {
+                resolve: (args) => {
                     clearTimeout(t);
                     resolve(args);
                 },
@@ -67,7 +76,7 @@ export default class WindowBus {
             };
             this.frame.postMessage({
                 action,
-                target: 'window-bus',
+                target: this.channel,
                 id: this.id++,
                 payload,
             }, this.frame.location.origin);

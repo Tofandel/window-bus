@@ -1,6 +1,8 @@
 import WindowBus from "../index";
 
 const bus = new WindowBus();
+bus.setChannel('demo'); // This is optional
+
 const pre = document.getElementsByTagName('pre')[0];
 const display = (res) => {
   pre.append(document.createTextNode(JSON.stringify(res)))
@@ -18,5 +20,10 @@ bus.on('test', (res, original) => {
 });
 
 bus.once('otherTest', (res) => {
+  setTimeout(() => {
+    bus.dispatch('print', 'sent from the server').then((msg) => {
+      display(msg);
+    });
+  }, 100);
   return res + ' for the first time';
 });

@@ -22,6 +22,7 @@ iframe.src = 'some_url';
 
 iframe.onload = () => {
   const bus = new WindowBus(iframe.contentWindow);
+  bus.setChannel('demo'); // This is optional, needs to match the server
 
   const pre = document.body;
   const display = (res) => {
@@ -38,6 +39,11 @@ iframe.onload = () => {
     })
   }).then(display);
 
+  bus.on('print', (msg) => {
+    display(msg);
+    return "reply from the client";
+  });
+  
   bus.dispatch('otherTest', 'hi').then((res) => {
     display(res);
     return bus.dispatch('otherTest', 'hi again')
@@ -52,6 +58,8 @@ document.body.append(iframe);
 import WindowBus from "window-bus";
 
 const bus = new WindowBus();
+bus.setChannel('demo'); // This is optional, needs to match on both sides
+
 const pre = document.body;
 const display = (res) => {
   pre.append(document.createTextNode(JSON.stringify(res)))
@@ -69,6 +77,11 @@ bus.on('test', (res, original) => {
 });
 
 bus.once('otherTest', (res) => {
+  setTimeout(() => {
+    bus.dispatch('print', 'sent from the server').then((msg) => {
+      display(msg);
+    });
+  }, 100);
   return res + ' for the first time';
 });
 ```

@@ -89,17 +89,21 @@ module.exports.TinyEmitter = E;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 var tiny_emitter_1 = __webpack_require__(/*! tiny-emitter */ "./node_modules/tiny-emitter/index.js");
 var WindowBus = (function () {
-    function WindowBus(targetWindow, origin) {
+    function WindowBus(targetWindow, origin, channel) {
         var _this = this;
         this.emitter = new tiny_emitter_1.TinyEmitter();
         this.frame = null;
         this.origin = null;
         this.id = 1;
         this.queue = {};
+        this.channel = 'window-bus';
         this.chains = {};
         this.frame = targetWindow || window.parent;
         if (!this.frame) {
             throw new Error('A frame is required');
+        }
+        if (channel) {
+            this.setChannel(channel);
         }
         this.origin = origin || this.frame.location.origin;
         window.addEventListener("message", function (event) {
@@ -107,7 +111,7 @@ var WindowBus = (function () {
                 return;
             try {
                 var data_1 = typeof event.data === "object" ? event.data : JSON.parse(event.data);
-                if (data_1.target === 'window-bus') {
+                if (data_1.target === _this.channel) {
                     if (data_1.reply === true && data_1.id && _this.queue[data_1.id]) {
                         _this.queue[data_1.id][data_1.error ? 'reject' : 'resolve'](data_1.payload);
                         delete _this.queue[data_1.id];
@@ -118,9 +122,9 @@ var WindowBus = (function () {
                             chain_1 = chain_1.then(function (v) { return cb(v, data_1.payload); });
                         });
                         chain_1.then(function (payload) {
-                            WindowBus.reply(event, data_1.id, payload);
+                            _this.reply(event, data_1.id, payload);
                         }, function (payload) {
-                            WindowBus.reply(event, data_1.id, payload, true);
+                            _this.reply(event, data_1.id, payload, true);
                         });
                     }
                 }
@@ -129,10 +133,13 @@ var WindowBus = (function () {
             }
         });
     }
-    WindowBus.reply = function (event, id, payload, error) {
+    WindowBus.prototype.setChannel = function (channel) {
+        this.channel = channel;
+    };
+    WindowBus.prototype.reply = function (event, id, payload, error) {
         event.source.postMessage({
             reply: true,
-            target: 'window-bus',
+            target: this.channel,
             id: id,
             payload: payload,
             error: error,
@@ -143,11 +150,7 @@ var WindowBus = (function () {
         return new Promise(function (resolve, reject) {
             var t = setTimeout(function () { return reject(new Error('timeout')); }, 30000);
             _this.queue[_this.id] = {
-                resolve: function () {
-                    var args = [];
-                    for (var _i = 0; _i < arguments.length; _i++) {
-                        args[_i] = arguments[_i];
-                    }
+                resolve: function (args) {
                     clearTimeout(t);
                     resolve(args);
                 },
@@ -155,7 +158,7 @@ var WindowBus = (function () {
             };
             _this.frame.postMessage({
                 action: action,
-                target: 'window-bus',
+                target: _this.channel,
                 id: _this.id++,
                 payload: payload,
             }, _this.frame.location.origin);
@@ -210,6 +213,7 @@ var __assign = (this && this.__assign) || function () {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 var index_1 = __webpack_require__(/*! ../index */ "./index.ts");
 var bus = new index_1.default();
+bus.setChannel('demo');
 var pre = document.getElementsByTagName('pre')[0];
 var display = function (res) {
     pre.append(document.createTextNode(JSON.stringify(res)));
@@ -225,6 +229,11 @@ bus.on('test', function (res, original) {
     return __assign(__assign({}, res), { result2: true });
 });
 bus.once('otherTest', function (res) {
+    setTimeout(function () {
+        bus.dispatch('print', 'sent from the server').then(function (msg) {
+            display(msg);
+        });
+    }, 100);
     return res + ' for the first time';
 });
 
