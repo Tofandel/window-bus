@@ -21,7 +21,7 @@ export default class WindowBus {
             this.setChannel(channel);
         }
 
-        this.origin = origin || this.frame.location.origin;
+        this.origin = origin || document.referrer || document.location.href;
 
         window.addEventListener("message", (event) => {
             if (event.origin !== this.origin)
@@ -79,7 +79,7 @@ export default class WindowBus {
                 target: this.channel,
                 id: this.id++,
                 payload,
-            }, this.frame.location.origin);
+            }, this.origin);
         });
     }
 

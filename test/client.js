@@ -89,7 +89,7 @@ module.exports.TinyEmitter = E;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 var tiny_emitter_1 = __webpack_require__(/*! tiny-emitter */ "./node_modules/tiny-emitter/index.js");
 var WindowBus = (function () {
-    function WindowBus(targetWindow, origin, channel) {
+    function WindowBus(targetWindow, channel, origin) {
         var _this = this;
         this.emitter = new tiny_emitter_1.TinyEmitter();
         this.frame = null;
