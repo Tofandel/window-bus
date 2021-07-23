@@ -95,5 +95,7 @@ This library assumes the server is a public page and thus any client can connect
 
 Here is the header you can serve from the server to only allow `https://some-client.com` to connect to the server
 ```
-Content-Security-Policy: frame-ancestors 'self' https://some-client.com;
+Content-Security-Policy: frame-ancestors https://some-client.com;
 ```
+
+You can also use the first parameter of startServer: `bus.startServer(['https://some-client.com'])` but the CSP is the most secure option

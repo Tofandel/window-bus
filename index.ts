@@ -108,12 +108,21 @@ export default class WindowBus {
         }, event.origin);
     }
 
-    dispatch(action: string, payload?: any): Promise<any> {
+    dispatch(action: string, payload?: any, timeout: number = 30000): Promise<any> {
         return new Promise((resolve, reject) => {
-            const t = setTimeout(() => reject(new Error('timeout')), 30000);
+            let t = null;
+            if (timeout) {
+                t = setTimeout(() => {
+                    const e = new Error(action + ' timed out') as any;
+                    e.payload = payload;
+                    e.timeout = true;
+                    e.action = action;
+                    reject(e)
+                }, timeout);
+            }
             this.queue[this.id] = {
                 resolve: (args) => {
-                    clearTimeout(t);
+                    t && clearTimeout(t);
                     resolve(args);
                 },
                 reject
