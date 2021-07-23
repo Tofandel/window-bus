@@ -21,32 +21,34 @@ const iframe = document.createElement('iframe');
 iframe.src = 'some_url';
 
 iframe.onload = () => {
-  const bus = new WindowBus(iframe.contentWindow, 'demo'); // demo here is the server channel
+  const bus = new WindowBus(iframe.contentWindow, iframe.src, 'demo'); // demo here is the server channel
+  bus.startClient().then(() => {
 
-  const pre = document.body;
-  const display = (res) => {
-    pre.append(document.createTextNode(JSON.stringify(res)));
-    pre.append(document.createElement('br'));
-  }
+    const pre = document.body;
+    const display = (res) => {
+      pre.append(document.createTextNode(JSON.stringify(res)));
+      pre.append(document.createElement('br'));
+    }
 
-  bus.dispatch('test', {
-    somePayload: true
-  }).then((res) => {
-    display(res);
-    return bus.dispatch('test', {
-      another: 'payload'
-    })
-  }).then(display);
+    bus.dispatch('test', {
+      somePayload: true
+    }).then((res) => {
+      display(res);
+      return bus.dispatch('test', {
+        another: 'payload'
+      })
+    }).then(display);
 
-  bus.on('print', (msg) => {
-    display(msg);
-    return "reply from the client";
+    bus.on('print', (msg) => {
+      display(msg);
+      return "reply from the client";
+    });
+
+    bus.dispatch('otherTest', 'hi').then((res) => {
+      display(res);
+      return bus.dispatch('otherTest', 'hi again')
+    }).then(display);
   });
-  
-  bus.dispatch('otherTest', 'hi').then((res) => {
-    display(res);
-    return bus.dispatch('otherTest', 'hi again')
-  }).then(display);
 }
 
 document.body.append(iframe);
@@ -56,7 +58,7 @@ document.body.append(iframe);
 ```js
 import WindowBus from "window-bus";
 
-const bus = new WindowBus(window.parent, 'demo'); // The channel is optional, but needs to match on both sides
+const bus = new WindowBus(window.parent, null, 'demo'); // The channel is optional, but needs to match on both sides
 //const bus = new WindowBus(window.opener, 'demo'); // This will allow both popups and iframes to communicate
 
 const pre = document.body;

@@ -89,10 +89,13 @@ module.exports.TinyEmitter = E;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 var tiny_emitter_1 = __webpack_require__(/*! tiny-emitter */ "./node_modules/tiny-emitter/index.js");
 var WindowBus = (function () {
-    function WindowBus(targetWindow, channel, origin) {
+    function WindowBus(targetWindow, origin, channel) {
         var _this = this;
         this.emitter = new tiny_emitter_1.TinyEmitter();
         this.frame = null;
+        this._client = null;
+        this._server = null;
+        this.serverReady = true;
         this.origin = null;
         this.id = 1;
         this.queue = {};
@@ -105,13 +108,19 @@ var WindowBus = (function () {
         if (channel) {
             this.setChannel(channel);
         }
-        this.origin = origin || this.frame.location.origin;
+        this.origin = origin || document.referrer;
+        if (this.origin) {
+            this.origin = new URL(this.origin).origin;
+        }
+        else {
+            this.origin = document.location.origin;
+        }
         window.addEventListener("message", function (event) {
-            if (event.origin !== _this.origin)
+            if (_this.serverReady && event.origin !== _this.origin)
                 return;
             try {
                 var data_1 = typeof event.data === "object" ? event.data : JSON.parse(event.data);
-                if (data_1.target === _this.channel && data_1.id) {
+                if (typeof data_1 === "object" && data_1.target === _this.channel && data_1.id) {
                     if (data_1.reply === true && _this.queue[data_1.id]) {
                         _this.queue[data_1.id][data_1.error ? 'reject' : 'resolve'](data_1.payload);
                         delete _this.queue[data_1.id];
@@ -133,6 +142,49 @@ var WindowBus = (function () {
             }
         });
     }
+    WindowBus.prototype.startClient = function (payload) {
+        if (this._client) {
+            throw new Error('Client already started');
+        }
+        return this._client = this.dispatch('bus-handshake', {
+            payload: payload,
+            origin: document.location.origin,
+        });
+    };
+    Object.defineProperty(WindowBus.prototype, "client", {
+        get: function () {
+            return this._client;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    WindowBus.prototype.startServer = function () {
+        var _this = this;
+        if (this._server) {
+            throw new Error('Server already started');
+        }
+        this.serverReady = false;
+        return this._server = new Promise(function (resolve, reject) {
+            var t = setTimeout(function () {
+                reject(new Error('Window bus timed out, did you forget to startClient?'));
+            }, 10000);
+            _this.once('bus-handshake', function (_a) {
+                var origin = _a.origin, payload = _a.payload;
+                _this.origin = origin;
+                _this.serverReady = true;
+                clearTimeout(t);
+                resolve(payload);
+                return payload;
+            });
+        });
+    };
+    Object.defineProperty(WindowBus.prototype, "server", {
+        get: function () {
+            return this._client;
+        },
+        enumerable: false,
+        configurable: true
+    });
     WindowBus.prototype.setChannel = function (channel) {
         this.channel = channel;
     };
@@ -161,7 +213,7 @@ var WindowBus = (function () {
                 target: _this.channel,
                 id: _this.id++,
                 payload: payload,
-            }, _this.frame.location.origin);
+            }, _this.origin);
         });
     };
     WindowBus.prototype.chainWrap = function (fn, action, cb) {
@@ -230,51 +282,54 @@ var exports = __webpack_exports__;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 var index_1 = __webpack_require__(/*! ../index */ "./index.ts");
 window.startClient = function (iframe) {
-    var bus = new index_1.default(iframe.contentWindow);
+    var bus = new index_1.default(iframe.contentWindow, (new URL(iframe.src)).origin);
     bus.setChannel('demo');
     var pre = document.getElementsByTagName('pre')[0];
     var display = function (res) {
         pre.append(document.createTextNode(JSON.stringify(res)));
         pre.append(document.createElement('br'));
     };
-    bus.dispatch('test', {
-        somePayload: true
-    }).then(function (res) {
-        display(res);
-        return bus.dispatch('test', {
-            another: 'payload'
+    bus.startClient().then(function () {
+        bus.dispatch('test', {
+            somePayload: true
+        }).then(function (res) {
+            display(res);
+            return bus.dispatch('test', {
+                another: 'payload'
+            });
+        }).then(display);
+        bus.on('print', function (msg) {
+            display(msg);
+            return "reply from the client";
         });
-    }).then(display);
-    bus.on('print', function (msg) {
-        display(msg);
-        return "reply from the client";
-    });
-    bus.dispatch('otherTest', 'hi').then(function (res) {
-        display(res);
-        return bus.dispatch('otherTest', 'hi again');
-    }).then(display);
-    var text = document.getElementsByTagName('textarea')[0];
-    text.addEventListener('input', function () {
-        bus.dispatch('change', text.value);
-    });
-    bus.on('change', function (value) {
-        text.value = value;
+        bus.dispatch('otherTest', 'hi').then(function (res) {
+            display(res);
+            return bus.dispatch('otherTest', 'hi again');
+        }).then(display);
+        var text = document.getElementsByTagName('textarea')[0];
+        text.addEventListener('input', function () {
+            bus.dispatch('change', text.value);
+        });
+        bus.on('change', function (value) {
+            text.value = value;
+        });
     });
 };
 window.openPopup = function () {
     var win = window.open('server.html', 'example', 'width=300,height=300');
     win.onload = function () {
-        var bus = new index_1.default(win);
-        bus.setChannel('demo-2');
-        var text = document.getElementsByTagName('textarea')[0];
-        bus.dispatch('change', text.value);
-        text.addEventListener('input', function () {
+        var bus = new index_1.default(win, window.location.origin, 'demo-2');
+        bus.startClient().then(function () {
+            var text = document.getElementsByTagName('textarea')[0];
             bus.dispatch('change', text.value);
-        });
-        bus.on('change', function (value) {
-            if (text.value !== value) {
-                text.value = value;
-            }
+            text.addEventListener('input', function () {
+                bus.dispatch('change', text.value);
+            });
+            bus.on('change', function (value) {
+                if (text.value !== value) {
+                    text.value = value;
+                }
+            });
         });
     };
 };

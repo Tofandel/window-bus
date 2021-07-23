@@ -4,13 +4,16 @@ export default class WindowBus {
     private readonly emitter = new TinyEmitter();
 
     private readonly frame: Window = null;
-    private readonly origin: string = null;
+    private _client: Promise<void> = null;
+    private _server: Promise<void> = null;
+    private serverReady: boolean = true;
+    private origin: string = null;
 
     private id = 1;
     private queue = {};
     private channel = 'window-bus';
 
-    constructor(targetWindow?: Window, channel?: string, origin?: string) {
+    constructor(targetWindow?: Window, origin?: string, channel?: string) {
         this.frame = targetWindow || (window.parent !== window && window.parent);
 
         if (!this.frame) {
@@ -21,15 +24,20 @@ export default class WindowBus {
             this.setChannel(channel);
         }
 
-        this.origin = origin || document.referrer || document.location.href;
+        this.origin = origin || document.referrer;
+        if (this.origin) {
+            this.origin = new URL(this.origin).origin;
+        } else {
+            this.origin = document.location.origin;
+        }
 
         window.addEventListener("message", (event) => {
-            if (event.origin !== this.origin)
+            if (this.serverReady && event.origin !== this.origin)
                 return;
             try {
                 const data = typeof event.data === "object" ? event.data : JSON.parse(event.data);
 
-                if (data.target === this.channel && data.id) {
+                if (typeof data === "object" && data.target === this.channel && data.id) {
                     if (data.reply === true && this.queue[data.id]) {
                         this.queue[data.id][data.error ? 'reject' : 'resolve'](data.payload);
                         delete this.queue[data.id];
@@ -50,7 +58,44 @@ export default class WindowBus {
         });
     }
 
-    setChannel (channel: string) {
+    startClient(payload?) {
+        if (this._client) {
+            throw new Error('Client already started');
+        }
+        return this._client = this.dispatch('bus-handshake', {
+            payload,
+            origin: document.location.origin,
+        });
+    }
+
+    get client(): null|Promise<any> {
+        return this._client;
+    }
+
+    startServer(): Promise<any> {
+        if (this._server) {
+            throw new Error('Server already started');
+        }
+        this.serverReady = false;
+        return this._server = new Promise((resolve, reject) => {
+            const t = setTimeout(() => {
+                reject(new Error('Window bus timed out, did you forget to startClient?'))
+            }, 10000);
+            this.once('bus-handshake', ({origin, payload}) => {
+                this.origin = origin;
+                this.serverReady = true;
+                clearTimeout(t);
+                resolve(payload);
+                return payload;
+            });
+        });
+    }
+
+    get server(): null|Promise<any> {
+        return this._client;
+    }
+
+    setChannel(channel: string) {
         this.channel = channel;
     }
 
