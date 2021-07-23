@@ -89,13 +89,12 @@ module.exports.TinyEmitter = E;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 var tiny_emitter_1 = __webpack_require__(/*! tiny-emitter */ "./node_modules/tiny-emitter/index.js");
 var WindowBus = (function () {
-    function WindowBus(targetWindow, origin, channel) {
+    function WindowBus(targetWindow, channel) {
         var _this = this;
         this.emitter = new tiny_emitter_1.TinyEmitter();
         this.frame = null;
         this._client = null;
         this._server = null;
-        this.serverReady = true;
         this.origin = null;
         this.id = 1;
         this.queue = {};
@@ -108,15 +107,8 @@ var WindowBus = (function () {
         if (channel) {
             this.setChannel(channel);
         }
-        this.origin = origin || document.referrer;
-        if (this.origin) {
-            this.origin = new URL(this.origin).origin;
-        }
-        else {
-            this.origin = document.location.origin;
-        }
         window.addEventListener("message", function (event) {
-            if (_this.serverReady && event.origin !== _this.origin)
+            if (_this.origin && event.origin !== _this.origin)
                 return;
             try {
                 var data_1 = typeof event.data === "object" ? event.data : JSON.parse(event.data);
@@ -142,9 +134,16 @@ var WindowBus = (function () {
             }
         });
     }
-    WindowBus.prototype.startClient = function (payload) {
+    WindowBus.prototype.startClient = function (origin, payload) {
+        if (origin === void 0) { origin = document.referrer; }
         if (this._client) {
             throw new Error('Client already started');
+        }
+        if (origin) {
+            this.origin = new URL(origin).origin;
+        }
+        else {
+            this.origin = document.location.origin;
         }
         return this._client = this.dispatch('bus-handshake', {
             payload: payload,
@@ -158,23 +157,26 @@ var WindowBus = (function () {
         enumerable: false,
         configurable: true
     });
-    WindowBus.prototype.startServer = function () {
+    WindowBus.prototype.startServer = function (origins, replyPayload) {
         var _this = this;
         if (this._server) {
             throw new Error('Server already started');
         }
-        this.serverReady = false;
         return this._server = new Promise(function (resolve, reject) {
             var t = setTimeout(function () {
                 reject(new Error('Window bus timed out, did you forget to startClient?'));
             }, 10000);
             _this.once('bus-handshake', function (_a) {
                 var origin = _a.origin, payload = _a.payload;
-                _this.origin = origin;
-                _this.serverReady = true;
-                clearTimeout(t);
-                resolve(payload);
-                return payload;
+                if (!origins || origins.includes(origin)) {
+                    _this.origin = origin;
+                    clearTimeout(t);
+                    resolve(payload);
+                    return replyPayload;
+                }
+                else {
+                    reject(new Error('Origin ' + origin + ' is not allowed'));
+                }
             });
         });
     };
@@ -282,14 +284,17 @@ var exports = __webpack_exports__;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 var index_1 = __webpack_require__(/*! ../index */ "./index.ts");
 window.startClient = function (iframe) {
-    var bus = new index_1.default(iframe.contentWindow, (new URL(iframe.src)).origin);
+    var bus = new index_1.default(iframe.contentWindow);
     bus.setChannel('demo');
     var pre = document.getElementsByTagName('pre')[0];
     var display = function (res) {
         pre.append(document.createTextNode(JSON.stringify(res)));
         pre.append(document.createElement('br'));
     };
-    bus.startClient().then(function () {
+    bus.startClient(iframe.src, 'hey').then(function (ho) {
+        if (ho !== 'ho') {
+            alert("Credentials don't match");
+        }
         bus.dispatch('test', {
             somePayload: true
         }).then(function (res) {
@@ -318,8 +323,8 @@ window.startClient = function (iframe) {
 window.openPopup = function () {
     var win = window.open('server.html', 'example', 'width=300,height=300');
     win.onload = function () {
-        var bus = new index_1.default(win, window.location.origin, 'demo-2');
-        bus.startClient().then(function () {
+        var bus = new index_1.default(win, 'demo-2');
+        bus.startClient(window.location.origin).then(function () {
             var text = document.getElementsByTagName('textarea')[0];
             bus.dispatch('change', text.value);
             text.addEventListener('input', function () {

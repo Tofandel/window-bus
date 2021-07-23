@@ -1,7 +1,7 @@
 import WindowBus from "../index";
 
 (window as any).startClient = (iframe) => {
-  const bus = new WindowBus(iframe.contentWindow, (new URL(iframe.src)).origin);
+  const bus = new WindowBus(iframe.contentWindow);
   bus.setChannel('demo'); // This is optional, needs to match server channel
 
   const pre = document.getElementsByTagName('pre')[0];
@@ -9,7 +9,10 @@ import WindowBus from "../index";
     pre.append(document.createTextNode(JSON.stringify(res)));
     pre.append(document.createElement('br'));
   }
-  bus.startClient().then(() => {
+  bus.startClient(iframe.src, 'hey').then((ho) => {
+    if (ho !== 'ho') {
+      alert("Credentials don't match");
+    }
     bus.dispatch('test', {
       somePayload: true
     }).then((res) => {
@@ -45,9 +48,9 @@ import WindowBus from "../index";
 (window as any).openPopup = () => {
   const win = window.open('server.html', 'example', 'width=300,height=300');
   win.onload = () => {
-    const bus = new WindowBus(win, window.location.origin, 'demo-2');
+    const bus = new WindowBus(win, 'demo-2');
 
-    bus.startClient().then(() => {
+    bus.startClient(window.location.origin).then(() => {
       const text = document.getElementsByTagName('textarea')[0];
 
       bus.dispatch('change', text.value);

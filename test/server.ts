@@ -21,7 +21,10 @@ if (window.opener) {
         const bus = new WindowBus(); // To allow communication with iframe don't pass anything
         bus.setChannel('demo'); // This is optional
 
-        bus.startServer().then(() => {
+        bus.startServer(null, 'ho').then((hey) => {
+            if (hey !== 'hey') {
+                alert("Credentials don't match")
+            }
             const text = document.getElementsByTagName('textarea')[0];
 
             text.addEventListener('input', () => {

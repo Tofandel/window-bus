@@ -21,8 +21,8 @@ const iframe = document.createElement('iframe');
 iframe.src = 'some_url';
 
 iframe.onload = () => {
-  const bus = new WindowBus(iframe.contentWindow, iframe.src, 'demo'); // demo here is the server channel
-  bus.startClient().then(() => {
+  const bus = new WindowBus(iframe.contentWindow, 'demo'); // demo here is the server channel
+  bus.startClient(iframe.src, "optionnaly send something to server").then((whatTheServerSentInStartServer) => {
 
     const pre = document.body;
     const display = (res) => {
@@ -58,32 +58,34 @@ document.body.append(iframe);
 ```js
 import WindowBus from "window-bus";
 
-const bus = new WindowBus(window.parent, null, 'demo'); // The channel is optional, but needs to match on both sides
+const bus = new WindowBus(window.parent, 'demo'); // The channel is optional, but needs to match on both sides
 //const bus = new WindowBus(window.opener, 'demo'); // This will allow both popups and iframes to communicate
 
-const pre = document.body;
-const display = (res) => {
-  pre.append(document.createTextNode(JSON.stringify(res)))
-  pre.append(document.createElement('br'));
-}
-const cb = (res) => new Promise((resolve) => {
-  setTimeout(() => resolve({ ...res, result1: true }), 100);
-});
-bus.on('test', cb);
+bus.startServer(['optional list of allowed origins'], "optionally send something to the client").then((whatTheClientSentInStartClient) => {
+  const pre = document.body;
+  const display = (res) => {
+    pre.append(document.createTextNode(JSON.stringify(res)))
+    pre.append(document.createElement('br'));
+  }
+  const cb = (res) => new Promise((resolve) => {
+    setTimeout(() => resolve({ ...res, result1: true }), 100);
+  });
+  bus.on('test', cb);
 
-bus.on('test', (res, original) => {
-  bus.off('test', cb);
-  display(original);
-  return { ...res, result2: true };
-});
+  bus.on('test', (res, original) => {
+    bus.off('test', cb);
+    display(original);
+    return { ...res, result2: true };
+  });
 
-bus.once('otherTest', (res) => {
-  setTimeout(() => {
-    bus.dispatch('print', 'sent from the server').then((msg) => {
-      display(msg);
-    });
-  }, 100);
-  return res + ' for the first time';
+  bus.once('otherTest', (res) => {
+    setTimeout(() => {
+      bus.dispatch('print', 'sent from the server').then((msg) => {
+        display(msg);
+      });
+    }, 100);
+    return res + ' for the first time';
+  });
 });
 ```
 
