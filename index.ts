@@ -99,7 +99,7 @@ export default class WindowBus {
     }
 
     private reply(event, id, payload?: any, error?: boolean) {
-        event.source.postMessage({
+        event.source && event.source.postMessage({
             reply: true,
             target: this.channel,
             id,
